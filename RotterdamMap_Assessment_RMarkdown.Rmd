@@ -1,0 +1,92 @@
+---
+title: "RotterdamMap_Assessment"
+author: "Carlos Mestre del Pino"
+date: "2 November 2018"
+output: html_document
+---
+
+```{r QGIS Map, echo=FALSE, fig.cap="QGIS Map", out.width = '100%'}
+knitr::include_graphics("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/Rotterdam/Density_Map_Rotterdam_QGIS.png")
+```
+
+
+First we install the different libraries needed to produce the maps
+
+```{r Libraries, echo=FALSE}
+
+library(maptools)
+library(RColorBrewer)
+library(OpenStreetMap)
+library(sp)
+library(tmap)
+library(tmaptools)
+library(sf)
+library(geojsonio)
+library(methods)
+
+```
+
+Continue by reading the two shapefiles
+
+```{r ReadShapes, echo=FALSE}
+# Read shapefile Rotterdam + river
+RotterdamMapSF <- read_shape("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map/Neighbourhoods_RDAM.shp", as.sf = TRUE)
+WaterSF <- read_shape("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Major_Water_Bodies_RDAM.shp", as.sf = TRUE)
+# Check class
+class(RotterdamMapSF)
+
+
+```
+
+Calculate areas of polygons
+
+```{r Calculate areas, echo=FALSE}
+
+library(raster)
+RotterdamData <- shapefile("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map/Neighbourhoods_RDAM.shp")
+crs(RotterdamData)
+RotterdamData$area_sqkm <- area(RotterdamData) / 1000000
+WaterData <- shapefile("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Major_Water_Bodies_RDAM.shp")
+
+
+```
+
+Calculate the population density of Rotterdam
+
+```{r Calculate density, echo=FALSE}
+# Calculate population density of each neighbourhood
+## Transform fields to "numeric"
+RotterdamData$AANT_INW <- as.numeric(RotterdamData$AANT_INW)
+class(RotterdamData$AANT_INW)
+RotterdamData$area_sqkm <- as.numeric(RotterdamData$area_sqkm)
+class(RotterdamData$area_sqkm)
+## Calculate Density
+RotterdamData$Density <- RotterdamData$AANT_INW / RotterdamData$area_sqkm
+
+```
+
+
+```{r Plot, echo=FALSE}
+# Plotting the data
+tmap_mode("plot")
+#RotterdamMapOSM <- read_osm(RotterdamMapSF, type = "esri", zoom = NULL)
+qtm(RotterdamData) + 
+  tm_shape(RotterdamData) + 
+  tm_polygons("Density", 
+              style="quantile",
+              palette="YlOrRd",
+              midpoint=NA,
+              title="Population Density (hab/km2)",
+              n= 6,
+              alpha = 1) + 
+  tm_compass(position = c("right", "bottom"),type = "arrow") + 
+  tm_scale_bar(position = c("right", "bottom")) +
+  tm_layout(title = "Population Density of Rotterdam (2011)", 
+            title.position = c("center","top"),
+            frame.lwd = 1,
+            asp = 1.7) +
+  qtm (WaterData) +
+  tm_shape (WaterData) +
+  tm_polygons ("type",
+               title= "Natural areas")
+```
