@@ -110,8 +110,8 @@ qtm(RotterdamData) +
               n= 6) + 
   tm_compass(position = c("right", "bottom"),type = "arrow") + 
   tm_scale_bar(position = c("right", "bottom")) +
-  tm_layout(main.title = "Population Density of Rotterdam, Netherlands (2011)", 
-            main.title.position = "center",
+  tm_layout(title = "Population Density of Rotterdam, Netherlands (2011)", 
+            title.position = c("center","top"),
             frame.lwd = 1,
             asp = 0.95,
             legend.stack ="vertical") +
