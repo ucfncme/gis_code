@@ -1,5 +1,5 @@
 ---
-title: "RotterdamMap_Assessment"
+title: "Assessment Part 1"
 author: "Carlos Mestre del Pino"
 date: "2 November 2018"
 output: html_document
@@ -113,7 +113,8 @@ qtm(RotterdamData) +
   tm_layout(title = "Population Density of Rotterdam, Netherlands (2011)", 
             title.position = c("center","top"),
             frame.lwd = 1,
-            asp = 0.95,
+            asp = 1.8,
+#            bg.color = "blue20",
             legend.stack ="vertical") +
 qtm (WaterData) +
   tm_shape (WaterData) +
