@@ -1,0 +1,122 @@
+---
+title: "RotterdamMap_Assessment"
+author: "Carlos Mestre del Pino"
+date: "2 November 2018"
+output: html_document
+---
+
+
+The first map was produced in QGIS, a GUI based software.
+In my opinion, QGIS is quite a user friendly software, in which producing maps is quite an easy task.
+This text explains the procedure used to produce the following map
+Reading shapefiles:
+
+The shapefiles imported were:
+Neighbourhoods Rotterdam - SOURCE
+Major Water Bodies - SOURCE
+Dutch municipalities - SOURCE
+
+```{r QGIS Map, echo=FALSE, fig.cap="QGIS Map", out.width = '100%'}
+knitr::include_graphics("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/Rotterdam/Density_Map_Rotterdam_QGIS.png")
+```
+
+
+Firstly the different libraries needed to produce the map are loaded
+
+```{r Libraries}
+
+library(maptools)
+library(RColorBrewer)
+library(sp)
+library(tmap)
+library(tmaptools)
+library(sf)
+library(geojsonio)
+library(methods)
+
+```
+
+Continue by reading the two shapefiles: the neighbourhoods of Rotterdam and the river and harbours
+
+```{r ReadShapes}
+
+RotterdamMapSF <- read_shape("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map/Neighbourhoods_RDAM.shp", as.sf = TRUE)
+WaterSF <- read_shape("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Major_Water_Bodies_RDAM.shp", as.sf = TRUE)
+Dutch_Municipalities_SF <- read_shape("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Dutch_Municipalities.shp", as.sf=TRUE)
+# Check class
+class(RotterdamMapSF)
+class(WaterSF)
+class(Dutch_Municipalities_SF)
+
+
+```
+
+Calculate areas of polygons:
+
+
+```{r Calculate areas}
+
+library(raster)
+
+RotterdamData <- shapefile("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map/Neighbourhoods_RDAM.shp")
+crs(RotterdamData)
+RotterdamData$area_sqkm <- area(RotterdamData) / 1000000
+WaterData <- shapefile("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Major_Water_Bodies_RDAM.shp")
+Dutch_Municipalities_Data <- shapefile("C:/Users/carlo/OneDrive/Documentos/MSc Smart Cities/GIS/Assessment 1/R Map_2/Dutch_Municipalities.shp")
+
+
+
+```
+
+Calculate the population density of Rotterdam:
+In order to calculate the density, it is first necessary to transform the fields into "numeric" type.
+To do so, we use the function "as.numeric()"
+Once the population per area and the areas are the numeric type, we can simply divide the Inhabbitants by the areas. This will give us a new field, which is now called "Density."
+
+```{r Calculate density}
+# Calculate population density of each neighbourhood
+## Transform fields to "numeric"
+RotterdamData$AANT_INW <- as.numeric(RotterdamData$AANT_INW)
+class(RotterdamData$AANT_INW)
+RotterdamData$area_sqkm <- as.numeric(RotterdamData$area_sqkm)
+class(RotterdamData$area_sqkm)
+## Calculate Density
+RotterdamData$Density <- RotterdamData$AANT_INW / RotterdamData$area_sqkm
+Dutch_Municipalities_Data$Type <- "Dutch Municipalities"
+
+
+```
+
+
+
+```{r Plot}
+# Plotting the data
+tmap_mode("plot")
+qtm(RotterdamMapSF) + 
+  tm_shape(RotterdamMapSF) + 
+  tm_polygons (style = "cat")+
+qtm(Dutch_Municipalities_Data)+
+  tm_shape(Dutch_Municipalities_Data)+
+  tm_polygons("Type",
+              palette = "Greys",
+              title= "")+
+  tm_style ("natural")+
+qtm(RotterdamData) + 
+  tm_shape(RotterdamData) + 
+  tm_polygons("Density", 
+              style="quantile",
+              palette="YlOrRd",
+              title="Population Density (hab/km2)",
+              n= 6) + 
+  tm_compass(position = c("right", "bottom"),type = "arrow") + 
+  tm_scale_bar(position = c("right", "bottom")) +
+  tm_layout(title = "Population Density of Rotterdam, Netherlands (2011)", 
+            title.position = c("center","top"),
+            frame.lwd = 1,
+            asp = 0.95,
+            legend.stack ="vertical") +
+qtm (WaterData) +
+  tm_shape (WaterData) +
+  tm_polygons ("type",
+               title= "")
+```
